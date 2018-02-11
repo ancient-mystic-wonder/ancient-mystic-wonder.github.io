@@ -3,16 +3,13 @@ layout: page
 title: About
 permalink: /about/
 ---
+Greetings! I'm Dale Lim - a software engineer who enjoys sleeping for more than 8 hours and eating past midnight.
 
-This is the base Jekyll theme. You can find out more info about customizing your Jekyll theme, as well as basic Jekyll usage documentation at [jekyllrb.com](https://jekyllrb.com/)
+Welcome to my misguided attempt at writing a blog. This beautiful corner of the web will mostly serve as a journal for experiments/coding stuff that I have done through the years. It is here where I will be documenting my works and blunders, and anything in between . Probably some personal/non coding related stuff too if I feel like it.
 
-You can find the source code for Minima at GitHub:
-[jekyll][jekyll-organization] /
-[minima](https://github.com/jekyll/minima)
+Hope you enjoy and learn something!
 
-You can find the source code for Jekyll at GitHub:
-[jekyll][jekyll-organization] /
-[jekyll](https://github.com/jekyll/jekyll)
+<br><br>
 
-
-[jekyll-organization]: https://github.com/jekyll
+While you're here, check out some of my stuff!<br>
+[BantayStocks](https://play.google.com/store/apps/details?id=com.dtlim.bantaystocks&hl=en)
