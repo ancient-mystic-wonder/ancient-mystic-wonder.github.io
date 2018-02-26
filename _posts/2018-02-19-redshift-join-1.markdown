@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Adventures with Joins in Spring (and AWS Redshift): Part 1"
+title:  "Adventures with Ad Hoc Joins in Spring (and AWS Redshift): Part 1"
 date:   2018-02-19
 categories: spring
 ---
@@ -16,14 +16,15 @@ This writeup is all about the mistakes, hurdles, intricacies, and "AHA!"s that I
 You can clone the repository [here][git-repo].
 
 ## The Problem
-My project uses a classic example of SQL entities for joins: a restaurant. I have created three entities: Customer, Table, and Order.  The relationship is described as follows:
+My project uses a classic example of SQL entities for joins: a restaurant. I have created three entities: Customer, Table, and Order. A UML diagram of these is provided below. The relationship between them is described as follows:
 - multiple Customers sit in one Table
 - a Customer can have multiple Orders
 
-You can take a closer look at the entities [here][entities-link]
-*UML diagram to follow*
+![Restaurant UML Diagram]({{ "/assets/redshiftjoin/uml.png" | absolute_url }})
 
-And, to keep things simple, I am required to list all the Customers, their Table and their Order (including ones that do not have a table and/or order). Each Customer and Order pair corresponds to one row (i.e. a Customer with five orders will yield five rows).
+Note that I intentionally omitted all foreign keys from my tables in order to simulate the ad hoc, unrelated nature of the tables I had to join at work. You can take a closer look at the code for the entities [here][entities-link]
+
+As for what the output of my program is supposed to be: to keep things simple, the objective is to list a left outer join between the Customer, Table and Order tables.
 
 ## Doing three joins
 Let's start by forgetting about AWS Redshift for a moment and tackling the basics - how are we going to do a three-way join with Spring Data? Turns out, making it efficient is not as straightforward as I thought. At first, I decided to code my `Customer` class as follows:
@@ -76,7 +77,7 @@ Which I later found out was the dreaded "n+1 select queries" problem - caused by
 
 _i.e. since I used `@JoinColumn(name = "table_number", referencedColumnName = "table_number"...)` Hibernated queried using `where restaurant0_.table_number=?`_
 
-<br><br>
+<br>
 
 After a bit of googling, I figured that the solution for this was using a "join fetch", which can be implemented in two ways: 
 
@@ -120,6 +121,12 @@ where 1=1
 ```
 
 As we can see, both methods successfully obtained the objects in just one query, which is what we wanted. (the Criteria API method has an extra `where 1=1` from using `cb.conjunction()` since I do not know how to return a `Predicate` object without any where clause)
+
+## Conclusion
+
+In this post I have shown the results, logs and some code on how I discovered a method for joining tables efficiently using join fetch. However this is only possible and quite trivial because of the entities having a primary key.
+
+For the next part, we will dive into what exactly happens when I take away our precious primary key constraints and how it will affect our joins. You can view the post here
 
 [git-repo]: https://github.com/ancient-mystic-wonder/threejointest
 [entities-link]: https://github.com/ancient-mystic-wonder/threejointest/tree/master/src/main/java/com/dtlim/threejointest/domain
