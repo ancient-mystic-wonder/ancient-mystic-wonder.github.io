@@ -5,7 +5,7 @@ date:   2018-02-19
 categories: spring
 ---
 _Part 1 explores the basics on using join fetch for Spring Data_<br>
-_Part 2 explores more on using AWS Redshift entities with Spring_
+_[Part 2]({{ site.baseurl }}{% post_url 2018-02-27-redshift-join-2 %}) explores more on using AWS Redshift entities with Spring_
 
 These past two weeks I have been dealing with a rather unique problem at work: joining three entities from an AWS Redshift database using Spring Data.  Now, the "old and two weeks less wise" version of me proclaimed that this would be a breeze - I mean all I have to do is annotate some `@ManyToOne`s and `@OneToMany`s and let Spring work its magic right? 
 
@@ -126,7 +126,7 @@ As we can see, both methods successfully obtained the objects in just one query,
 
 In this post I have shown the results, logs and some code on how I discovered a method for joining tables efficiently using join fetch. However this is only possible and quite trivial because of the entities having a primary key.
 
-For the next part, we will dive into what exactly happens when I take away our precious primary key constraints and how it will affect our joins. You can view the post here
+For the next part, we will dive into what exactly happens when I take away our precious primary key constraints and how it will affect our joins. You can view the post [here]({{ site.baseurl }}{% post_url 2018-02-27-redshift-join-2 %})
 
 [git-repo]: https://github.com/ancient-mystic-wonder/threejointest
 [entities-link]: https://github.com/ancient-mystic-wonder/threejointest/tree/master/src/main/java/com/dtlim/threejointest/domain
