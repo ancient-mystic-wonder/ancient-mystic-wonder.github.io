@@ -15,8 +15,8 @@ This presents a problem for Spring's entities, as we shall see in a while.
 
 <br>
 
-## Attempting to join `Customer` and `Table`
-I started with trying to join two entities, in this case we shall go with `Customer` and `Table`. Now since `Customer` no longer has a primary key, I decided to annotate ALL its fields with `@Id` - which required the use of either an embeddable ID or the `@IdClass` annotation. I chose to use the latter for my example:
+## Attempting to join `Customer` and `RestaurantTable`
+I started with trying to join two entities, in this case we shall go with `Customer` and `RestaurantTable`. Now since `Customer` no longer has a primary key, I decided to annotate ALL its fields with `@Id` - which required the use of either an embeddable ID or the `@IdClass` annotation. I chose to use the latter for my example:
 
 ```java
 @Entity
@@ -52,7 +52,7 @@ public class Customer implements Serializable {
 }
 ```
 
-So far, so good - running this will get us the Customers along with their corresponding Table. Now, when I add the list of orders:
+So far, so good - running this will get us the Customers along with their corresponding RestaurantTable. Now, when I add the list of orders:
 
 ```java
 --- in Customer.java ---
@@ -72,7 +72,7 @@ which happens because the `@OneToMany` annotation's `@JoinColumn` annotation is 
 
 I attempted to fix this by using only the `Customer.name` field with as the ID, however I later realized that this solution will not work - customers with the same name are treated as one entity (and Hibernate apparently will use the same object/reference for entities with same ID).
 
-For example, if my `Customer` and `Table` tables' contents are the following:
+For example, if my `Customer` and `RestaurantTable` tables' contents are the following:
 
 #### Customer:
 
@@ -81,14 +81,14 @@ For example, if my `Customer` and `Table` tables' contents are the following:
 | Paul | 40 | 1 |
 | Paul | 10 | 2 |
 
-#### Table:
+#### RestaurantTable:
 
 | Table Number | Capacity |
 |------|------|
 | 1 | 5 |
 | 2 | 6 |
 
-Our left join on `Customer` and `Table` will leave us with:
+Our left join on `Customer` and `RestaurantTable` will leave us with:
 ```
 [{"name": "Paul", "age": 40, "table_number": 1, "table": {"table_number": 1, "capacity": 5}}
 {"name": "Paul", "age": 40, "table_number": 1, "table": {"table_number": 1, "capacity": 5}}]
@@ -109,7 +109,7 @@ After a lot of fiddling and googling, I decided that Spring Data was being to re
 
 Thankfully I came across this [article][article-ad-hoc] on using `EntityManager.createQuery(...)` to join two entities. This way, I get to keep using JPA/Hibernate and my entities won't be wasted. However, since I will be defining the fields to select, I needed to create a separate `CustomerResponse` object to hold the values.
 
-The `CustomerResponse` object is just a DTO that has all the combined fields of `Customer`, `Table`, and `Order`:
+The `CustomerResponse` object is just a DTO that has all the combined fields of `Customer`, `RestaurantTable`, and `Order`:
 ```java
 @Data
 @AllArgsConstructor

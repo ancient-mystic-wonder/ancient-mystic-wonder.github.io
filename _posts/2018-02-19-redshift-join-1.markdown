@@ -16,15 +16,15 @@ This writeup is all about the mistakes, hurdles, intricacies, and "AHA!"s that I
 You can clone the repository [here][git-repo].
 
 ## The Problem
-My project uses a classic example of SQL entities for joins: a restaurant. I have created three entities: Customer, Table, and Order. A UML diagram of these is provided below. The relationship between them is described as follows:
-- multiple Customers sit in one Table
+My project uses a classic example of SQL entities for joins: a restaurant. I have created three entities: Customer, Table (named RestaurantTable in code), and Order. A UML diagram of these is provided below. The relationship between them is described as follows:
+- multiple Customers sit in one RestaurantTable
 - a Customer can have multiple Orders
 
 ![Restaurant UML Diagram]({{ "/assets/redshiftjoin/uml.png" | absolute_url }})
 
 Note that I intentionally omitted all foreign keys from my tables in order to simulate the ad hoc, unrelated nature of the tables I had to join at work. You can take a closer look at the code for the entities [here][entities-link]
 
-As for what the output of my program is supposed to be: to keep things simple, the objective is to list a left outer join between the Customer, Table and Order tables.
+As for what the output of my program is supposed to be: to keep things simple, the objective is to list a left outer join between the Customer, RestaurantTable and Order tables.
 
 ## Doing three joins
 Let's start by forgetting about AWS Redshift for a moment and tackling the basics - how are we going to do a three-way join with Spring Data? Turns out, making it efficient is not as straightforward as I thought. At first, I decided to code my `Customer` class as follows:
@@ -73,7 +73,7 @@ Hibernate: select orders0_.customer_name as customer2_1_0_, orders0_.id as id1_1
 Hibernate: select orders0_.customer_name as customer2_1_0_, orders0_.id as id1_1_0_, orders0_.id as id1_1_1_, orders0_.customer_name as customer2_1_1_, orders0_.food_name as food_nam3_1_1_ from orders orders0_ where orders0_.customer_name=?
 Hibernate: select orders0_.customer_name as customer2_1_0_, orders0_.id as id1_1_0_, orders0_.id as id1_1_1_, orders0_.customer_name as customer2_1_1_, orders0_.food_name as food_nam3_1_1_ from orders orders0_ where orders0_.customer_name=?
 ```
-Which I later found out was the dreaded "n+1 select queries" problem - caused by Hibernate individually querying every foreign object related to that entity (in this case - `Table` and `Order`) using whatever you put in the `@JoinColumn` as the where clause for the search queries.
+Which I later found out was the dreaded "n+1 select queries" problem - caused by Hibernate individually querying every foreign object related to that entity (in this case - `RestaurantTable` and `Order`) using whatever you put in the `@JoinColumn` as the where clause for the search queries.
 
 _i.e. since I used `@JoinColumn(name = "table_number", referencedColumnName = "table_number"...)` Hibernated queried using `where restaurant0_.table_number=?`_
 
