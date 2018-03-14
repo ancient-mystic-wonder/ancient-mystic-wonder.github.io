@@ -1,0 +1,155 @@
+---
+layout: post
+title:  "Journey to DaleOSP: Part 0.0"
+date:   2018-03-11
+categories: android-rom
+---
+
+One thing has always been on by bucket list, and has always interested me for most of my life as a developer, is creating my own personal custom rom for Android. Now, I am aware that this is a rather challenging undertaking which will span months, maybe even years (since this is something I will have to do outside of work), however that will not deter me. This series will document all my experiments, learnings, and side-quests on anything rom-dev related (such as porting, rooting, custom kernels, etc.) which will ultimately help me in developing the DaleOSP - my own custom rom.
+
+As of writing this article, I have only began to scratch the surface of the deep iceburg that is rom development. In fact, nowadays my free time mostly consists of browsing and reading a ton of posts on XDA and the Cyanogenmod archives (and some Tekken). Hence making this post officially Part 0.
+
+<br>
+
+## What's in this post?
+
+Being a developer who is still taking his first baby steps in rom dev, I have decided to get a feel of the build process by building the stock Marshmallow AOSP rom for a Nexus 5 device (yes, Android is already at Oreo and P preview as of March 3, 2018, but I chose the Nexus 5 because it is the only phone that I have a chance of getting with my tight budget). The process should be relatively the same for the later versions.
+
+<br>
+
+## Getting started
+
+I am going to be doing Build M4B30Z, branch android-6.0.1_r77 for the Nexus 5 (found [here][build-numbers])
+
+As the environment: I did this build on an Ubuntu 16.04.3 image in VirtualBox.
+
+As per the requirements, Marshmallow has to be built using Java 7. Since Ubuntu 16.04.3 ships with Java 8 by default, I had to make a few adjustments. This was when I learned about the `update-alternatives` command.
+
+<br>
+
+## Setting up Java 7
+
+First off, I downloaded Java 7 using the folllowing command:
+
+```
+sudo add-apt-repository ppa:openjdk-r/ppa  
+sudo apt-get update   
+sudo apt-get install openjdk-7-jdk
+```
+
+Next, I ran `sudo update-alternatives --config java` which should give the following menu:
+
+```
+  Selection    Path                                            Priority   Status
+------------------------------------------------------------
+* 0            /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java   1081      auto mode
+  1            /usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java   1071      manual mode
+  2            /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java   1081      manual mode
+
+Press <enter> to keep the current choice[*], or type selection number: 
+```
+
+This allows me to choose between the different java versions to use as the default. Now do the same thing for `javac` by running `sudo update-alternatives --config javac`
+
+Now, double checking with `java -version`, `javac -version` should get the following output:
+
+```
+java version "1.7.0_95"
+OpenJDK Runtime Environment (IcedTea 2.6.4) (7u95-2.6.4-3)
+OpenJDK 64-Bit Server VM (build 24.95-b01, mixed mode)
+
+javac 1.7.0_95
+```
+
+<br>
+
+## Preparing to build
+
+Now, I'm going to condense this part a bit, since most of it is just following the instructions [here][downloading].
+
+Getting the actual source code (this is the longest part):
+```
+repo init -u https://android.googlesource.com/platform/manifest -b android-6.0.1_r77
+repo sync
+```
+
+Setting up ccache:
+```
+export USE_CCACHE=1
+mkdir ~/.ccache
+export CCACHE_DIR=~/.ccache
+prebuilts/misc/linux-x86/ccache/ccache -M 50G
+```
+
+Getting the proprietary binaries:
+Since my build number is M4B30Z, I download the three files [here][proprietary-binaries] to the root of the source folder.
+
+Now I untar them and execute the extracted shell scripts:
+```
+tar zxvf broadcom-hammerhead-m4b30z-21cf8433.tgz
+tar zxvf lge-hammerhead-m4b30z-520d054d.tgz
+tar zxvf qcom-hammerhead-m4b30z-d6c0fe26.tgz
+./extract-broadcom-hammerhead.sh
+./extract-lg-hammerhead.sh
+./extract-qcom-hammerhead.sh
+```
+
+Note: these scripts populate the `/vendor` directory, which consists of proprietary binaries
+
+<br>
+
+## Building the AOSP
+
+Now I run the following commands as instructed [here][building]:
+
+```
+make clobber
+source build/envsetup.sh
+lunch aosp_arm-eng
+make -j4
+```
+
+In anticipation to finally get my first ever build, I alt-tabbed the virtual machine to go watch some videos and browse reddit. After more than an hour, however, I came back to this soul-crushing error message:
+
+```
+after 1st build attempt (make -j4), received this error:
+out/host/linux-x86/obj/SHARED_LIBRARIES/libartd_intermediates/arch/x86_64/quick_entrypoints_x86_64.o:function art_quick_instrumentation_entry: error: unsupported reloc 42
+out/host/linux-x86/obj/SHARED_LIBRARIES/libartd_intermediates/arch/x86_64/quick_entrypoints_x86_64.o:function art_quick_instrumentation_exit: error: unsupported reloc 42
+out/host/linux-x86/obj/SHARED_LIBRARIES/libartd_intermediates/arch/x86_64/quick_entrypoints_x86_64.o:function art_quick_deoptimize: error: unsupported reloc 42
+clang: error: linker command failed with exit code 1 (use -v to see invocation)
+build/core/host_shared_library_internal.mk:51: recipe for target 'out/host/linux-x86/obj/lib/libartd.so' failed
+make: *** [out/host/linux-x86/obj/lib/libartd.so] Error 1
+
+#### make failed to build some targets (01:34:01 (hh:mm:ss)) ####
+```
+
+After browsing the net for solutions, I found these threads discussing the same behavior:
+[https://stackoverflow.com/questions/36048358/building-android-from-sources-unsupported-reloc-43](https://stackoverflow.com/questions/36048358/building-android-from-sources-unsupported-reloc-43)
+[https://groups.google.com/forum/#!topic/android-rpi/W2hMX7jB-s0](https://groups.google.com/forum/#!topic/android-rpi/W2hMX7jB-s0)
+
+Turns out, I had to apply a patch file to fix the problem (or just edit the `build/core/clang/HOST_x86_common.mk`, but I chose the nerdier option). Now, for people who have never used a patch file like me, it goes like this:
+
+```
+git apply --stat filename.patch  // to see the stats
+git apply --check filename.patch // to check if the patch will yield conflicts
+git am --signoff < filename.patch // apply the patch
+```
+
+Okay, now that that's settled, I cleared out the `~/.ccache` and `out/` directories and ran the build commands again...
+
+...and SUCCESS!
+
+<br>
+
+## Running the emulator
+
+Now, since I picked the emulator as my target (when I entered `lunch aosp_arm-eng`), I ran `emulator` which resulted in this:
+
+![Emulator]({{ "/assets/daleosp0/emulator.png" | absolute_url }})
+
+Ain't she beautiful? (note that I was running on a virtual machine which was not in fullscreen, so the screen appears to be cut at the bottom part)
+
+[build-numbers]: https://source.android.com/setup/build-numbers
+[downloading]: https://source.android.com/setup/downloading
+[proprietary-binaries]: https://developers.google.com/android/drivers#hammerheadm4b30z
+[building]: https://source.android.com/setup/building
