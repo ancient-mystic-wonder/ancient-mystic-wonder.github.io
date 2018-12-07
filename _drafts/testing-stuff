@@ -1,0 +1,12 @@
+boundary testing - parameter limits (max values for stuff)
+destructive testing
+smoke test - basic core essential functionalities
+integration test w/ 3rd party components (try uninstalling 3rd party apps if they are being used)
+
+tampering parameters (paste weird stuff)
+check lint
+check obfuscation
+check if user disallows permissions doesnt cause crash
+monkey runner
+check w/ weak internet, mobile data
+different locale (number formats could be different)
